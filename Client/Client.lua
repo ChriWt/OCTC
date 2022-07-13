@@ -47,3 +47,5 @@ function Client:checkIfConnected()
         print("Connected to server: ", self.serverAddress, "port", self.port)
     end
 end
+
+return Client
