@@ -1,3 +1,4 @@
+package.path = package.path .. ";../?.lua"
 local PortRequestMessage = require("Utils.PortRequestMessage")
 local component = require("component")
 local event = require("event")
@@ -69,7 +70,7 @@ end
 
 function portRequestHandler(message)
     local portRequest = PortRequestMessage:newFromSerialize(message)
-
+    print("ricevuta richiesta")
     local requestGroup = portRequest:getGroup()
     local port = group[requestGroup]["port"]
 

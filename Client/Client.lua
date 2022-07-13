@@ -1,7 +1,9 @@
-local PortRequestMessage = require("utils.PortRequestMessage")
+package.path = package.path .. ";../?.lua"
+local PortRequestMessage = require("Utils.PortRequestMessage")
 local component = require("component")
 local event = require("event")
 local modem = component.modem
+local gpu = component.gpu
 
 local TIMEOUT = 5
 local WAIT_TIME = 0.05
@@ -42,8 +44,10 @@ function Client:eventHandler(...)
 end
 
 function Client:checkIfConnected()
+    print("Cecking ", self.port)
     if self.port ~= nil then
         event.cancel(self.eventTimerID)
+        gpu.fill(1, 1, 160, 50, " ")
         print("Connected to server: ", self.serverAddress, "port", self.port)
     end
 end

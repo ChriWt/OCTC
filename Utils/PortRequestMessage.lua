@@ -25,7 +25,7 @@ function PortRequestMessage:new(type, group)
 end
 
 function PortRequestMessage:newFromSerialize(object)
-    local message = serializer.unserialize(object) or {}
+    local message = serializer.unserialize(object or "{}") or {}
     setmetatable(message, PortRequestMessage)
     return message
 end
