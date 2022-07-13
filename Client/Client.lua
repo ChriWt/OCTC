@@ -14,7 +14,8 @@ Client = {
     serverAddress = "", 
     port = nil, 
     _eventListenerID = nil,
-    _eventTimerID = nil
+    _eventTimerID = nil,
+    _connected = false
 }
 Client.__index = Client
 
@@ -30,6 +31,11 @@ end
 function Client:connect()
     print("Connecting...")
     self:askGroupPort()
+    if self._connected then
+        print("Connected")
+    else
+        print("No Connection...")
+    end
 end
 
 function Client:askGroupPort()
@@ -39,35 +45,42 @@ function Client:askGroupPort()
     modem.broadcast(defaultPort, message:serialize())
     print("Opening port " .. tostring(defaultPort))
     modem.open(defaultPort)
-    self._eventListenerID = event.listen("modem_message", function(...) self:eventHandler(...) end)
-    self._eventTimerID = event.timer(TIMEOUT, function() self:checkIfConnected() end, 1)
+    print("Waiting responce..")
+    self:waitForServerResponce()
+    modem.close(defaultPort)
 end
 
-function Client:eventHandler(...)
+function Client:waitForServerResponce()
+    local sender, responce = self:getSenderAndMessage(event.pull(TIMEOUT, "modem_message"))
+    if responce == nil then
+        print("Timeout: Could not establish a connection with server")
+        self._connected = false
+        return
+    else
+        local unserializedMessage = self:messageToObj(responce)
+        if self:isResponce(unserializedMessage) then
+            print("Server " .. sender .. " responded with port " .. tostring(unserializedMessage:getPort()))
+            self.serverAddress = sender
+            self.port = unserializedMessage:getPort()
+            self._connected = true
+            return
+        else
+            return self:waitForServerResponce()
+        end
+    end
+end
+
+function Client:getSenderAndMessage(...)
     local _type, _receiver, sender, port, _distance, message = ...
-    local responce = PortRequestMessage:newFromSerialize(message)
-    print("Received message from " .. sender .. " of type (" .. responce:getType() .. ")")
-    if responce:getType() == PortRequestMessage.RESPONCE then
-        self.serverAddress = sender
-        self.port = responce:getPort()
-        self:_closePortAndListeners(defaultPort)
-    end
+    return sender, message
 end
 
-function Client:checkIfConnected()
-    if self.port ~= nil then 
-        print("Connected to server: ", self.serverAddress, "port", self.port)
-    else 
-        print("TIMEOUT: Could not connect to server")
-    end
-    self:_closePortAndListeners(defaultPort)
+function Client:messageToObj(message)
+    return PortRequestMessage:newFromSerialize(message)
 end
 
-function Client:_closePortAndListeners(port)
-    print("Closing ports and listeners...")
-    event.cancel(self._eventListenerID)
-    event.cancel(self._eventTimerID)
-    modem.close(port)
+function Client:isResponce(obj)
+    return obj:getType() == PortRequestMessage.RESPONCE
 end
 
 return Client
