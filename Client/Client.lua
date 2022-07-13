@@ -45,7 +45,7 @@ function Client:askGroupPort()
     modem.broadcast(defaultPort, message:serialize())
     print("Opening port " .. tostring(defaultPort))
     modem.open(defaultPort)
-    print("Waiting responce..")
+    print("Waiting for responce..")
     self:waitForServerResponce()
     modem.close(defaultPort)
 end

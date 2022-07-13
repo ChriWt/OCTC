@@ -50,4 +50,8 @@ function PortRequestMessage:setPort(port)
     self.port = port
 end
 
+function PortRequestMessage:getPort()
+    return self.port
+end
+
 return PortRequestMessage
