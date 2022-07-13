@@ -3,7 +3,6 @@ local PortRequestMessage = require("Utils.PortRequestMessage")
 local component = require("component")
 local event = require("event")
 local modem = component.modem
--- local gpu = component.gpu
 
 local TIMEOUT = 5
 
