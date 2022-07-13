@@ -1,7 +1,6 @@
 local PortRequestMessage = require("Utils.PortRequestMessage")
 local component = require("component")
 local event = require("event")
-local serialization = require("serialization")
 local modem = component.modem
 local gpu = component.gpu
 
@@ -74,7 +73,7 @@ function portRequestHandler(message)
     local requestGroup = portRequest:getGroup()
     local port = group[requestGroup]["port"]
 
-    local portResponce = PortRequestMessage:new("responce", requestGroup)
+    local portResponce = PortRequestMessage:new(PortRequestMessage.RESPONCE, requestGroup)
     portResponce:setPort(port)
 
     modem.send(portRequest:getAddress(), 1, portResponce:serialize())

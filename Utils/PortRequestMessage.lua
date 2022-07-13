@@ -2,7 +2,15 @@ local serializer = require("serialization")
 local component = require("component")
 local modem = component.modem
 
-PortRequestMessage = { type = "", address = "", group = "", port = nil}
+PortRequestMessage = {
+    RESPONCE = "responce",
+    REQUEST = "request",
+    type = "",
+    address = "",
+    group = "",
+    port = nil,
+}
+
 PortRequestMessage.__index = PortRequestMessage
 
 function PortRequestMessage:new(type, group)
