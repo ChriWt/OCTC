@@ -3,83 +3,89 @@ local PortRequestMessage = require("Utils.PortRequestMessage")
 local component = require("component")
 local event = require("event")
 local modem = component.modem
-local gpu = component.gpu
 
-local defaultPort = 1
-local group = {
-    sieve = {
-        port = 2,
-        priority = 2,
-        endpoint = {}
-    },
-    farmer = 
-    {
-        port = 3,
-        priority = 1,
-        endpoint = {}
+Server = { 
+    defaultPort = 1,
+    group = {
+        sieve = {
+            port = 2,
+            priority = 2,
+            endpoint = {}
+        },
+            farmer = {
+            port = 3,
+            priority = 1,
+            endpoint = {}
+        }
     }
 }
+Server.__index = Server
 
-function openPorts()
-    modem.open(defaultPort)
-    for key, value in pairs(group) do
-        local port = group[key]["port"]
+function Server:new()
+    local server = {}
+    setmetatable(server, Server)
+    return server
+end
+
+function Server:start()
+    print("Starting...")
+    self:openPorts()
+    return self:startListening()
+end
+
+function Server:openPorts()
+    modem.open(self.defaultPort)
+    for key, _value in pairs(self.group) do
+        local port = self.group[key]["port"]
         modem.open(port)
     end
+    print("Ports opened")
 end
 
-function startListening(port)
-    displayStatus()
-    setListener()
+function Server:startListening()
+    return event.listen("modem_message", function (...) self:eventHandler(...) end)
 end
 
-function displayStatus()
-    local status = arePortsOpen()
-    local text = "SERVER STATUS: "
-    if status then
-        text = text .. "Online"
-    else
-        text = text .. "Offline"
-    end
-    gpu.set(1, 1, text)
+function Server:eventHandler(...)
+    local _type, _receiver, _sender, port, _distance, message = ...
+    print("Received message:")
+    self:handleMessage(port, message)
 end
 
-function arePortsOpen()
-    for key, value in pairs(group) do
-        if not modem.isOpen(group[key]["port"]) then
-            return false
-        end
-    end
-    return modem.isOpen(defaultPort)
-end
-
-function setListener()
-    event.listen("modem_message", eventHandler)
-end
-
-function eventHandler(...)
-    local type, receiver, sender, port, distance, message = ...
-    handleEventByPort(port, message)
-end
-
-function handleEventByPort(port, message)
+function Server:handleMessage(port, message)
     if port == 1 then
-        portRequestHandler(message)
+        print("Type: port request")
+        self:portRequestHandler(message)
     end
 end
 
-function portRequestHandler(message)
-    local portRequest = PortRequestMessage:newFromSerialize(message)
-    print("ricevuta richiesta")
+function Server:portRequestHandler(request)
+    local portRequest = PortRequestMessage:newFromSerialize(request)
+
     local requestGroup = portRequest:getGroup()
-    local port = group[requestGroup]["port"]
+    local port = self.group[requestGroup]["port"]
 
     local portResponce = PortRequestMessage:new(PortRequestMessage.RESPONCE, requestGroup)
     portResponce:setPort(port)
 
     modem.send(portRequest:getAddress(), 1, portResponce:serialize())
+    print("Sent port (" .. tostring(port) .. ") to " .. portRequest:getAddress())
 end
 
-gpu.fill(1, 1, 160, 50, " ")
-openPorts()
-startListening(defaultPort)
+function Server:stop(eventID)
+    print("Stopping...")
+    local isServerStopped = event.cancel(eventID)
+    print("Server " .. (isServerStopped and "stopped listening" or "wasn't up"))
+    self:closePorts()
+end
+
+function Server:closePorts()
+    modem.close(self.defaultPort)
+    for key, _value in pairs(self.group) do
+        local port = self.group[key]["port"]
+        modem.close(port)
+    end
+    print("Ports closed")
+end
+
+return Server
