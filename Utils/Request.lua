@@ -64,3 +64,4 @@ function Request:serialize()
     return serialization.serialize(self)
 end
 
+return Request
