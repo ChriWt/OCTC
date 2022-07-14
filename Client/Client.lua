@@ -40,32 +40,39 @@ end
 function Client:askGroupPort()
     print("Asking server for the port for group: " .. self.group)
     local message = PortRequestMessage:new(PortRequestMessage.REQUEST, self.group)
+
     print("Broadcasting request...")
     modem.broadcast(defaultPort, message:serialize())
+
     print("Opening port " .. tostring(defaultPort))
     modem.open(defaultPort)
+
     print("Waiting for responce..")
     self:waitForServerResponce()
+
     modem.close(defaultPort)
 end
 
 function Client:waitForServerResponce()
     local sender, responce = self:getSenderAndMessage(event.pull(TIMEOUT, "modem_message"))
+
     if responce == nil then
         print("Timeout: Could not establish a connection with server")
         self._connected = false
-        return
     else
         local unserializedMessage = self:messageToObj(responce)
-        if self:isResponce(unserializedMessage) then
-            print("Server " .. sender .. " responded with port " .. tostring(unserializedMessage:getPort()))
-            self.serverAddress = sender
-            self.port = unserializedMessage:getPort()
-            self._connected = true
-            return
-        else
-            return self:waitForServerResponce()
-        end
+        self:handleMessage(sender, unserializedMessage)
+    end
+end
+
+function Client:handleMessage(sender, message)
+    if self:isServerResponce(message) then
+        print("Server " .. sender .. " responded with port " .. tostring(message:getPort()))
+        self.serverAddress = sender
+        self.port = message:getPort()
+        self._connected = true
+    else
+        self:waitForServerResponce()
     end
 end
 
@@ -78,7 +85,7 @@ function Client:messageToObj(message)
     return PortRequestMessage:newFromSerialize(message)
 end
 
-function Client:isResponce(obj)
+function Client:isServerResponce(obj)
     return obj:getType() == PortRequestMessage.RESPONCE
 end
 

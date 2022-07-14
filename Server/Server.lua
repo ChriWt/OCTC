@@ -17,6 +17,10 @@ Server = {
             priority = 1,
             endpoint = {}
         }
+    },
+    ports = {
+        sieve = 2,
+        farmer = 3
     }
 }
 Server.__index = Server
@@ -68,7 +72,7 @@ function Server:portRequestHandler(request)
     local portResponce = PortRequestMessage:new(PortRequestMessage.RESPONCE, requestGroup)
     portResponce:setPort(port)
 
-    modem.send(portRequest:getAddress(), 1, portResponce:serialize())
+    modem.send(portRequest:getAddress(), self.defaultPort, portResponce:serialize())
     print("Sent port (" .. tostring(port) .. ") to " .. portRequest:getAddress())
 end
 
