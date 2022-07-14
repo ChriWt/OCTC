@@ -1,5 +1,7 @@
 package.path = package.path .. ";../?.lua"
-local PortRequestMessage = require("Utils.PortRequestMessage")
+--local PortRequestMessage = require("Utils.PortRequestMessage")
+local Response = require("Utils.Response")
+local Request = require("Utils.Request")
 local component = require("component")
 local event = require("event")
 local modem = component.modem
@@ -24,6 +26,8 @@ Server = {
     }
 }
 Server.__index = Server
+Server.OK = 200
+Server.NOT_FOUND = 404
 
 function Server:new()
     local server = {}
@@ -51,30 +55,60 @@ function Server:startListening()
 end
 
 function Server:eventHandler(...)
-    local _type, _receiver, _sender, port, _distance, message = ...
+    local _type, _receiver, sender, _port, _distance, message = ...
     print("Received message:")
-    self:handleMessage(port, message)
+    self:handleMessage(sender, message)
 end
 
-function Server:handleMessage(port, message)
-    if port == 1 then
-        print("Type: port request")
-        self:portRequestHandler(message)
+function Server:handleMessage(sender, message)
+    local request = Request:unserialize(message)
+    if request.method == Request.GET then
+        self:handleGET(sender, request)
     end
 end
 
-function Server:portRequestHandler(request)
-    local portRequest = PortRequestMessage:newFromSerialize(request)
+function Server:handleGET(sender, request)
+    local resource = self:_getResource(request.uri)
+    local port = request.head.host
 
-    local requestGroup = portRequest:getGroup()
-    local port = self.group[requestGroup]["port"]
-
-    local portResponce = PortRequestMessage:new(PortRequestMessage.RESPONCE, requestGroup)
-    portResponce:setPort(port)
-
-    modem.send(portRequest:getAddress(), self.defaultPort, portResponce:serialize())
-    print("Sent port (" .. tostring(port) .. ") to " .. portRequest:getAddress())
+    local response = Response:new()
+    response:setCode(resource ~= nil and self.OK or self.NOT_FOUND)
+    response:setBody({value = resource})
+    print("VALORE: ", resource)
+    modem.send(sender, port, response:serialize())
 end
+
+function Server:_getResource(uri)
+    local resource = self 
+    for element in string.gmatch(uri, "([^/]+)") do
+        print("GET RES", element)
+        if resource == nil then
+            return nil
+        end
+        resource = resource[element]
+    end 
+    return resource
+end
+
+-- function Server:handleMessage(port, request)
+    -- if port == 1 then
+    --     print("Type: port request")
+    --     self:portRequestHandler(request)
+    -- end
+-- end
+
+-- function Server:portRequestHandler(request)
+--     local portRequest = PortRequestMessage:newFromSerialize(request)
+
+--     local requestGroup = portRequest:getGroup()
+--     local port = self.group[requestGroup]["port"]
+
+--     local portResponce = PortRequestMessage:new(PortRequestMessage.RESPONCE, requestGroup)
+--     portResponce:setPort(port)
+
+--     modem.send(portRequest:getAddress(), self.defaultPort, portResponce:serialize())
+--     print("Sent port (" .. tostring(port) .. ") to " .. portRequest:getAddress())
+-- end
 
 function Server:stop(eventID)
     print("Stopping...")

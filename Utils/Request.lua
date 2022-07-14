@@ -2,6 +2,7 @@ local serialization = require("serialization")
 
 Request = {
     method = "",
+    uri = "",
     head = {
         host = nil,
         port = nil
@@ -17,15 +18,16 @@ Request.PUT = "put"
 Request.DELETE = "delete"
 Request.PATCH = "patch"
 
-function Request:new(method)
+function Request:new(method, uri)
     if not self:isValideMethod(method) then
         error("Request method is not valid", 2)
     end
 
     local request = {}
-
     setmetatable(request, Request) 
+
     request.method = method
+    request.uri = uri
 
     return request
 end
@@ -42,13 +44,6 @@ function Request:setBody(body)
     self.body = body
 end
 
-function Request:unserializeRequest(request)
-    if request == nil then
-        error("Can't unserialize Request. Request is nil")
-    end
-    return serialization.unserialize(request)
-end
-
 function Request:isValideMethod(method)
     return  method == self.GET or 
             method == self.HEAD or 
@@ -58,7 +53,14 @@ function Request:isValideMethod(method)
             method == self.PATCH
 end
 
-function Request:getSerialized()
+function Request:unserialize(request)
+    if request == nil then
+        error("Can't unserialize Request. Request is nil")
+    end
+    return serialization.unserialize(request)
+end
+
+function Request:serialize()
     return serialization.serialize(self)
 end
 
