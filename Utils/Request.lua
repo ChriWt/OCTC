@@ -1,14 +1,6 @@
 local serialization = require("serialization")
 
-Request = {
-    method = "",
-    uri = "",
-    head = {
-        host = nil,
-        port = nil
-    }, 
-    body = {} 
-}
+Request = {}
 
 Request.__index = Request
 Request.GET = "get"
@@ -28,6 +20,11 @@ function Request:new(method, uri)
 
     request.method = method
     request.uri = uri
+    request.head = {
+        host = nil,
+        port = nil
+    }
+    request.body = {}
 
     return request
 end

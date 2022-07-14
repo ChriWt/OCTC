@@ -69,19 +69,18 @@ end
 
 function Server:handleGET(sender, request)
     local resource = self:_getResource(request.uri)
-    local port = request.head.host
+    local port = request.head.port
 
     local response = Response:new()
     response:setCode(resource ~= nil and self.OK or self.NOT_FOUND)
     response:setBody({value = resource})
-    print("VALORE: ", resource)
+    print("Sending to", sender, "on port", port, "value", response:serialize())
     modem.send(sender, port, response:serialize())
 end
 
 function Server:_getResource(uri)
     local resource = self 
     for element in string.gmatch(uri, "([^/]+)") do
-        print("GET RES", element)
         if resource == nil then
             return nil
         end
@@ -89,26 +88,6 @@ function Server:_getResource(uri)
     end 
     return resource
 end
-
--- function Server:handleMessage(port, request)
-    -- if port == 1 then
-    --     print("Type: port request")
-    --     self:portRequestHandler(request)
-    -- end
--- end
-
--- function Server:portRequestHandler(request)
---     local portRequest = PortRequestMessage:newFromSerialize(request)
-
---     local requestGroup = portRequest:getGroup()
---     local port = self.group[requestGroup]["port"]
-
---     local portResponce = PortRequestMessage:new(PortRequestMessage.RESPONCE, requestGroup)
---     portResponce:setPort(port)
-
---     modem.send(portRequest:getAddress(), self.defaultPort, portResponce:serialize())
---     print("Sent port (" .. tostring(port) .. ") to " .. portRequest:getAddress())
--- end
 
 function Server:stop(eventID)
     print("Stopping...")
