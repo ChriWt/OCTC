@@ -23,7 +23,7 @@ end
 
 function Response:unserialize(request)
     if request == nil then
-        error("Can't unserialize Request. Request is nil")
+        error("Can't unserialize request. The request is nil")
     end
     return serialization.unserialize(request)
 end

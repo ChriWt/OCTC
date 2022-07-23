@@ -1,9 +1,9 @@
 package.path = package.path .. ";../?.lua"
---local PortRequestMessage = require("Utils.PortRequestMessage")
 local Response = require("Utils.Response")
 local Request = require("Utils.Request")
 local component = require("component")
 local event = require("event")
+local Codes = require("Utils.Codes")
 local modem = component.modem
 
 Server = { 
@@ -26,8 +26,8 @@ Server = {
     }
 }
 Server.__index = Server
-Server.OK = 200
-Server.NOT_FOUND = 404
+-- Server.OK = 200
+-- Server.NOT_FOUND = 404
 
 function Server:new()
     local server = {}
@@ -72,8 +72,9 @@ function Server:handleGET(sender, request)
     local port = request.head.port
 
     local response = Response:new()
-    response:setCode(resource ~= nil and self.OK or self.NOT_FOUND)
+    response:setCode(resource ~= nil and Codes.OK or Codes.NOT_FOUND)
     response:setBody({value = resource})
+
     print("Sending to", sender, "on port", port, "value", response:serialize())
     modem.send(sender, port, response:serialize())
 end

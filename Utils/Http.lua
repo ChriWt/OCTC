@@ -1,4 +1,4 @@
-local component = require("component")
+local component = require("component") 
 local event = require("event")
 local modem = component.modem
 
@@ -26,13 +26,12 @@ function Http:sendRequest(request, callback, timeout)
     local address = request.head.host
     self._port = request.head.port or self.defaultPort
 
-    print("Sending...")
     local isSent = self:_send(address, request) 
     if isSent then
         self:_setTimeoutEventHandler(timeout, callback)
         self:_listen(self.modemMessage, callback)
     else
-        print("Could not send request to server")
+        error("Error could not send message, make sure you are using a modem")
     end
 end
 
@@ -53,8 +52,6 @@ function Http:_setTimeoutEventHandler(timeout, callback)
 end
 
 function Http:_listen(messageType, callback)
-    print("Start listening for a response")
-    
     modem.open(self.defaultPort)
 
     self._eventListenerID = event.listen(
@@ -64,15 +61,11 @@ function Http:_listen(messageType, callback)
 end
 
 function Http:_onServerResponse(callback, ...)
-    print("On server response")
-
     self:_closePortsAndEvents()
     callback(...)
 end
 
 function Http:_closePortsAndEvents()
-    print("closing: listener", self._eventListenerID, "timer", self._eventTimerID, "port", self._port)
-
     event.cancel(self._eventTimerID)
     event.cancel(self._eventListenerID)
     modem.close(self._port)

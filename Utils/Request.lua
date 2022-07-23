@@ -10,7 +10,7 @@ Request.PUT = "put"
 Request.DELETE = "delete"
 Request.PATCH = "patch"
 
-function Request:new(method, uri)
+function Request:new(method, uri, port)
     if not self:isValideMethod(method) then
         error("Request method is not valid", 2)
     end
@@ -20,6 +20,7 @@ function Request:new(method, uri)
 
     request.method = method
     request.uri = uri
+    request.port = port
     request.head = {
         host = nil,
         port = nil
@@ -31,10 +32,6 @@ end
 
 function Request:setHost(host)
     self.head.host = host
-end
-
-function Request:setPort(port)
-    self.head.port = port
 end
 
 function Request:setBody(body)
